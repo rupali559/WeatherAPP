@@ -1,15 +1,19 @@
+// src/HomePage.js
+
 import React, { useState } from 'react';
 import './App.css';
 import { MdFavoriteBorder, MdFavorite } from 'react-icons/md';
 import { BsThreeDotsVertical } from 'react-icons/bs';
+import { useNavigate } from 'react-router-dom';
 
-const App = () => {
+const HomePage = () => {
   const [cityInput, setCityInput] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [selectedCity, setSelectedCity] = useState(null);
   const [forecast, setForecast] = useState(null);
   const [hourlyData, setHourlyData] = useState([]);
   const [optionsShownFor, setOptionsShownFor] = useState(null);
+  const navigate = useNavigate();  // to navigate after logout
 
   const [favorites, setFavorites] = useState(() => {
     const saved = localStorage.getItem('favorites');
@@ -126,7 +130,9 @@ const App = () => {
 
   return (
     <div className="app">
-      <div style={{ position: 'absolute', left: 20, top: 20 }}>
+      
+
+      <div style={{ position: 'absolute', left: 20, top: 80 }}>
         <h3 style={{ fontSize: '16px' }}>Saved</h3>
         <ul style={{ fontSize: '14px' }}>
           {favorites.map((fav, i) => (
@@ -172,12 +178,23 @@ const App = () => {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
             <h2 style={{ fontSize: '18px', fontWeight: '500' }}>{forecast.name}, {forecast.country}</h2>
             <button
-              onClick={() => isFavorite(forecast.name) ? removeFromFavorites(forecast.name) : addToFavorites(forecast.name)}
-              style={{ border: 'none', background: 'none', cursor: 'pointer', width: '10px'}}
-              title={isFavorite(forecast.name) ? 'Remove from favorites' : 'Add to favorites'}
-            >
-              {isFavorite(forecast.name) ? <MdFavorite size={22} color="red" /> : <MdFavoriteBorder size={22} />}
-            </button>
+  onClick={() => {
+    const isLoggedIn = localStorage.getItem('isLoggedIn');
+    if (!isLoggedIn) {
+      alert('Please login first!');
+      navigate('/login'); // Redirect to login
+    } else {
+      isFavorite(forecast.name) 
+        ? removeFromFavorites(forecast.name) 
+        : addToFavorites(forecast.name);
+    }
+  }}
+  style={{ border: 'none', background: 'none', cursor: 'pointer', width: '10px' }}
+  title={isFavorite(forecast.name) ? 'Remove from favorites' : 'Add to favorites'}
+>
+  {isFavorite(forecast.name) ? <MdFavorite size={22} color="red" /> : <MdFavoriteBorder size={22} />}
+</button>
+
           </div>
           <div className="day" style={{ fontSize: '15px' }}>
             {forecast.dateStr}<br />
@@ -217,4 +234,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default HomePage;
