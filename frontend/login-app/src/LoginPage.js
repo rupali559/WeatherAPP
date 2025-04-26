@@ -22,14 +22,29 @@ const LoginPage = () => {
 
       if (data.success) {
         alert(`${type} success!`);
+
         if (type === 'login') {
+          // Save isLoggedIn and userName into localStorage
           localStorage.setItem('isLoggedIn', 'true');
-          navigate('/home');
+
+          // If your backend sends userName inside 'data.userName'
+          if (data.userName) {
+            localStorage.setItem('userName', data.userName);
+          } else {
+            // fallback: save email if userName not sent
+            localStorage.setItem('userName', email.split('@')[0]);
+          }
+
+          navigate('/'); // go to HomePage (/) after login
+        } else if (type === 'register') {
+          // After register, maybe redirect to login page
+          navigate('/login');
         }
       } else {
         alert(data.error || 'Something went wrong');
       }
     } catch (err) {
+      console.error(err);
       alert('Server error. Please try again later.');
     }
   };
@@ -37,6 +52,7 @@ const LoginPage = () => {
   return (
     <div style={{ padding: '2rem' }}>
       <h2>Login / Register</h2>
+
       <input
         type="email"
         placeholder="Email"
@@ -51,7 +67,7 @@ const LoginPage = () => {
         onChange={e => setPassword(e.target.value)}
       /><br /><br />
 
-      <button onClick={() => handleSubmit('login')}>Login</button>
+      <button onClick={() => handleSubmit('login')}>Login</button>{' '}
       <button onClick={() => handleSubmit('register')}>Register</button>
     </div>
   );

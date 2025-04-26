@@ -1,10 +1,8 @@
-// src/HomePage.js
-
 import React, { useState } from 'react';
-import './App.css';
 import { MdFavoriteBorder, MdFavorite } from 'react-icons/md';
-import { BsThreeDotsVertical } from 'react-icons/bs';
 import { useNavigate } from 'react-router-dom';
+import Navbar from './Navbar'; // Import Navbar
+import './App.css';
 
 const HomePage = () => {
   const [cityInput, setCityInput] = useState('');
@@ -12,29 +10,15 @@ const HomePage = () => {
   const [selectedCity, setSelectedCity] = useState(null);
   const [forecast, setForecast] = useState(null);
   const [hourlyData, setHourlyData] = useState([]);
-  const [optionsShownFor, setOptionsShownFor] = useState(null);
-  const navigate = useNavigate();  // to navigate after logout
+  const [toastMessage, setToastMessage] = useState(''); // ✅ New state for popup
+  const navigate = useNavigate();
 
-  const [favorites, setFavorites] = useState(() => {
-    const saved = localStorage.getItem('favorites');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const addToFavorites = (city) => {
-    if (!favorites.includes(city)) {
-      const updated = [...favorites, city];
-      setFavorites(updated);
-      localStorage.setItem('favorites', JSON.stringify(updated));
-    }
+  const showToast = (message) => {
+    setToastMessage(message);
+    setTimeout(() => {
+      setToastMessage('');
+    }, 2500); // Toast disappears after 2.5 seconds
   };
-
-  const removeFromFavorites = (city) => {
-    const updated = favorites.filter(fav => fav !== city);
-    setFavorites(updated);
-    localStorage.setItem('favorites', JSON.stringify(updated));
-  };
-
-  const isFavorite = (city) => favorites.includes(city);
 
   const autocompleteCity = async (e) => {
     const input = e.target.value.trim();
@@ -46,7 +30,6 @@ const HomePage = () => {
     try {
       const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(input)}&count=5`);
       const data = await res.json();
-
       if (data.results) setSuggestions(data.results);
     } catch (err) {
       console.error('Autocomplete error:', err);
@@ -88,7 +71,7 @@ const HomePage = () => {
         feelsLike: Math.round(data.current.apparent_temperature),
         high: Math.round(data.daily.temperature_2m_max[0]),
         low: Math.round(data.daily.temperature_2m_min[0]),
-        wind: Math.round(data.current.wind_speed_10m)
+        wind: Math.round(data.current.wind_speed_10m),
       };
 
       setForecast(forecastData);
@@ -128,31 +111,37 @@ const HomePage = () => {
     return '';
   };
 
+  const handleFavoriteToggle = (cityName) => {
+    const isLoggedIn = localStorage.getItem('isLoggedIn');
+    if (!isLoggedIn) {
+      alert('Please login first!');
+      navigate('/login');
+      return;
+    }
+
+    const savedFavorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    const isFav = savedFavorites.includes(cityName);
+    let updatedFavorites;
+
+    if (isFav) {
+      updatedFavorites = savedFavorites.filter(c => c !== cityName);
+      showToast(`Removed ${cityName} from favorites ❌`);
+    } else {
+      updatedFavorites = [...savedFavorites, cityName];
+      showToast(`Added ${cityName} to favorites ❤️`);
+    }
+
+    localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+  };
+
+  const isFavorite = (cityName) => {
+    const savedFavorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    return savedFavorites.includes(cityName);
+  };
+
   return (
     <div className="app">
-      
-
-      <div style={{ position: 'absolute', left: 20, top: 80 }}>
-        <h3 style={{ fontSize: '16px' }}>Saved</h3>
-        <ul style={{ fontSize: '14px' }}>
-          {favorites.map((fav, i) => (
-            <li key={i} style={{ cursor: 'pointer', marginBottom: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span onClick={() => {
-                setCityInput(fav);
-                getWeather();
-              }}>{fav}</span>
-              <span style={{ position: 'relative' }}>
-                <BsThreeDotsVertical onClick={() => setOptionsShownFor(optionsShownFor === fav ? null : fav)} style={{ cursor: 'pointer', fontSize: '14px' }} />
-                {optionsShownFor === fav && (
-                  <div style={{ position: 'absolute', right: 0, top: '20px', background: '#fff', border: '1px solid #ccc', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>
-                    <div style={{ cursor: 'pointer' }} onClick={() => removeFromFavorites(fav)}>Remove</div>
-                  </div>
-                )}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
+      <Navbar />
 
       <h1 style={{ fontSize: '22px' }}>Weather Forecast</h1>
       <input type="text" value={cityInput} onChange={autocompleteCity} placeholder="Enter city name" />
@@ -166,6 +155,7 @@ const HomePage = () => {
               setSelectedCity(city);
               getWeather();
             }}
+            style={{ cursor: 'pointer' }}
           >
             {city.name}, {city.country}
           </li>
@@ -178,24 +168,14 @@ const HomePage = () => {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
             <h2 style={{ fontSize: '18px', fontWeight: '500' }}>{forecast.name}, {forecast.country}</h2>
             <button
-  onClick={() => {
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    if (!isLoggedIn) {
-      alert('Please login first!');
-      navigate('/login'); // Redirect to login
-    } else {
-      isFavorite(forecast.name) 
-        ? removeFromFavorites(forecast.name) 
-        : addToFavorites(forecast.name);
-    }
-  }}
-  style={{ border: 'none', background: 'none', cursor: 'pointer', width: '10px' }}
-  title={isFavorite(forecast.name) ? 'Remove from favorites' : 'Add to favorites'}
->
-  {isFavorite(forecast.name) ? <MdFavorite size={22} color="red" /> : <MdFavoriteBorder size={22} />}
-</button>
-
+              onClick={() => handleFavoriteToggle(forecast.name)}
+              style={{ border: 'none', background: 'none', cursor: 'pointer', width: '10px' }}
+              title={isFavorite(forecast.name) ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              {isFavorite(forecast.name) ? <MdFavorite size={22} color="red" /> : <MdFavoriteBorder size={22} />}
+            </button>
           </div>
+
           <div className="day" style={{ fontSize: '15px' }}>
             {forecast.dateStr}<br />
             {forecast.current}°C • Feels like {forecast.feelsLike}°<br />
@@ -228,6 +208,25 @@ const HomePage = () => {
             </div>
             <button className="scroll-btn" onClick={() => scrollHourly(1)}>&#8594;</button>
           </div>
+        </div>
+      )}
+
+      {/* ✅ Popup (Toast) */}
+      {toastMessage && (
+        <div style={{
+          position: 'fixed',
+          bottom: '30px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: 'red',
+          color: 'white',
+          padding: '10px 20px',
+          borderRadius: '20px',
+          fontSize: '16px',
+          fontWeight: 'bold',
+          zIndex: 9999
+        }}>
+          {toastMessage}
         </div>
       )}
     </div>

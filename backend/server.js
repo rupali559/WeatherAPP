@@ -8,7 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const MONGO_URI = 'mongodb://34.67.204.171:27017/login-app';
+const MONGO_URI = 'mongodb://34.67.100.230:27017/login-app';
 
 mongoose.connect(MONGO_URI, {
   useNewUrlParser: true,
