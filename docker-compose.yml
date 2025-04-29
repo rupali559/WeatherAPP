@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGO_URI=mongodb://35.193.153.105:27017/login_db
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend/login-app
+    ports:
+      - "3000:80"
+    restart: unless-stopped

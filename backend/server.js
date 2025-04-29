@@ -8,13 +8,21 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const MONGO_URI = 'mongodb://34.67.100.230:27017/login-app';
+// const mongoose = require('mongoose');
 
-mongoose.connect(MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-}).then(() => console.log('✅ MongoDB connected'))
-  .catch(err => console.log('❌ MongoDB connection error:', err));
+mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}).then(() => console.log('MongoDB connected'))
+  .catch(err => console.log('MongoDB connection error:', err));
+
+// const MONGO_URI = 'mongodb://35.225.114.159:27017/login-app';
+
+// mongoose.connect(MONGO_URI, {
+//   useNewUrlParser: true,
+//   useUnifiedTopology: true,
+// }).then(() => console.log('✅ MongoDB connected'))
+//   .catch(err => console.log('❌ MongoDB connection error:', err));
 
 app.post('/register', async (req, res) => {
   const { email, password } = req.body;
